@@ -4,10 +4,24 @@
  * SPDX-License-Identifier: ISC
  */
 
+import { parseAnsiCQuotedString } from './string-utils.js'
+
+const ANSI_REGEX = /\$('.*')/s
+export function escapeAnsiCQuotes (stringArr: string[]): string[] {
+  return (stringArr || []).map(str => {
+    const match = (str || '').match(ANSI_REGEX)
+    if (match && match.length > 1) {
+      const matchGroup = match[1]
+      return str.replace(ANSI_REGEX, parseAnsiCQuotedString(matchGroup))
+    }
+    return str
+  })
+}
+
 // take an un-split argv string and tokenize it.
 export function tokenizeArgString (argString: string | any[]): string[] {
   if (Array.isArray(argString)) {
-    return argString.map(e => typeof e !== 'string' ? e + '' : e)
+    return escapeAnsiCQuotes(argString.map(e => typeof e !== 'string' ? e + '' : e))
   }
 
   argString = argString.trim()
@@ -42,5 +56,5 @@ export function tokenizeArgString (argString: string | any[]): string[] {
     args[i] += c
   }
 
-  return args
+  return escapeAnsiCQuotes(args)
 }
